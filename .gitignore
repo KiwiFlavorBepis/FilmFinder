@@ -1,4 +1,4 @@
-#add TMDB csv
-
-#add created csvs e.g. cleanedData.csv
+#ignores any csv file
+*.csv
+#VS code folder
 /.vs
