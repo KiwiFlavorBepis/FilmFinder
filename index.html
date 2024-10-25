@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FilmFinder</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1 id="filmfinder" style="color:#653239">FilmFinder</h1>
+        
+        <form>
+            <div>
+                <label for="plotSummary"><strong>Plot Summary:</strong></label>
+                <input type="text" id="plotSummary">
+                <div id="plotSummaryError" class="error"></div>
+            </div>
+
+            <div>
+                <label for="genre"><strong>Genre:</strong></label>
+                <input type="text" id="genre">
+                <div id="genreError" class="error"></div>
+            </div>
+
+            <div>
+                <label for="keywords"><strong>Keywords:</strong></label>
+                <input type="text" id="keywords">
+                <div id="keywordsError" class="error"></div>
+            </div>
+
+            <button type="button" onclick="validate()">Search</button>
+        </form>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
