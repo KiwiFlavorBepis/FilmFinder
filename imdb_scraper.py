@@ -144,8 +144,7 @@ def scrape_imdb_id(imdb_id):
     except Exception as e:
         print(f"Error for movie {imdb_id}: {str(e)}")
         return None
-
-# Main processing loop
+    
 def update_movie_dataset(input_file, output_file, limit=None):
     df = pd.read_csv(input_file)
     
@@ -175,20 +174,7 @@ def update_movie_dataset(input_file, output_file, limit=None):
             pd.isnull(row['tagline']) or pd.isnull(row['production_companies']) or
             pd.isnull(row['production_countries'])):
             
-            print("Scraping missing data from IMDb:")
             movie_data = scrape_imdb_id(imdb_id)
-            
-            if movie_data:
-                # Update all available fields
-                for field in ['runtime', 'genres', 'spoken_languages', 'overview', 'tagline', 
-                            'production_companies', 'production_countries']:
-                    if field in movie_data:
-                        df.at[index, field] = movie_data[field]
-                        print(f"    New {field}: {movie_data[field]}")
-            else:
-                print("    No new data found")
-        else:
-            print("Skipping - existing data found")
         
         print("-" * 50)
         
