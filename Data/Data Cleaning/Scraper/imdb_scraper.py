@@ -3,54 +3,95 @@ import requests
 from bs4 import BeautifulSoup
 import re
 
+def parse_runtime_to_minutes(runtime_text):
+    """Convert runtime text to minutes."""
+    hours_match = re.search(r'(\d+)hours?', runtime_text)
+    minutes_match = re.search(r'(\d+)minutes?', runtime_text)
+    
+    total_minutes = 0
+    if hours_match:
+        total_minutes += int(hours_match.group(1)) * 60
+    if minutes_match:
+        total_minutes += int(minutes_match.group(1))
+    
+    return total_minutes if total_minutes > 0 else None
+
 def scrape_imdb_id(imdb_id):
     header = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 6.3; Win 64 ; x64) Apple WeKit /537.36(KHTML , like Gecko) Chrome/80.0.3987.162 Safari/537.36'
     }
+
+    # scraping from main imdb url
     url = f"https://www.imdb.com/title/{imdb_id}/"
-    response = requests.get(url, headers=header)
+    response = requests.get(url , headers=header)
     
     if response.status_code != 200:
         print(f"Error: Status code {response.status_code} for {imdb_id}")
         return None
     
     soup = BeautifulSoup(response.text, 'html.parser')
+
+    # scraping from plot summary url
+    url_summary = f"https://www.imdb.com/title/{imdb_id}/plotsummary/"
+    response_summary = requests.get(url_summary , headers=header)
+    
+    if response_summary.status_code != 200:
+        print(f"Error: Status code {response_summary.status_code} for {imdb_id} plot summary")
+        return None
+    
+    soup_summary = BeautifulSoup(response_summary.text, 'html.parser')
+
+    # scraping from plot tagline url
+    url_tagline = f"https://www.imdb.com/title/{imdb_id}/taglines/"
+    response_tagline = requests.get(url_tagline , headers=header)
+    
+    if response_tagline.status_code != 200:
+        print(f"Error: Status code {response_tagline.status_code} for {imdb_id} tagline")
+        return None
+    
+    soup_tagline = BeautifulSoup(response_tagline.text, 'html.parser')
+
+    # scraping from keywords url
+    url_keywords = f"https://www.imdb.com/title/{imdb_id}/keywords/"
+    response_keywords = requests.get(url_keywords , headers=header)
+
+    if response_keywords.status_code != 200:
+        print(f"Error: Status code {response_keywords.status_code} for {imdb_id} tagline")
+        return None
+    
+    soup_keywords = BeautifulSoup(response_keywords.text, 'html.parser')
+
     movie_data = {}
     
+    #main IMDB URL
     try:
+        # Scraping genres
+        chip_list_scrollers = soup.find_all('div', class_='ipc-chip-list__scroller')
+        if chip_list_scrollers:
+            genres_scroller = chip_list_scrollers[0]
+            genres = [
+                genre.find('span', class_='ipc-chip__text').get_text(strip=True) 
+                for genre in genres_scroller.find_all('a', class_='ipc-chip')
+            ]
+            if genres:
+                movie_data['genres'] = ', '.join(genres)
+                print(f"    New Genres: {', '.join(genres)}")
+            else:
+                print("    Genres not found")
+
         # Scraping for movie runtime
         runtime_element = soup.find('li', attrs={'data-testid': 'title-techspec_runtime'})
         if runtime_element:
             runtime_text = runtime_element.find('div', class_='ipc-metadata-list-item__content-container').get_text(strip=True)
             if runtime_text:
-                movie_data['runtime'] = runtime_text
+                runtime_minutes = parse_runtime_to_minutes(runtime_text)
+                if runtime_minutes:
+                    movie_data['runtime'] = runtime_minutes
+                    print(f"    New Runtime: {runtime_minutes}")
         else:
             print("    Runtime: Not found")
-        
-        # Scraping genres
-        genres_element = soup.find('div', {'data-testid': 'genres'})
-        if not genres_element:
-            genres_element = soup.find('li', {'data-testid': 'storyline-genres'})
-            
-        genres_list = []
-        
-        if genres_element:
-            # Try both possible class names for genre links
-            genre_links = genres_element.find_all('a', class_=['ipc-chip__text', 
-                'ipc-metadata-list-item__list-content-item'])
-            
-            if genre_links:
-                for genre_link in genre_links:
-                    genre = genre_link.get_text(strip=True)
-                    genres_list.append(genre)
-                
-                genres_str = ', '.join(genres_list)
-                movie_data['genres'] = genres_str
-            else:
-                print("    Genres: Not found")
-        else:
-            print("    Genres element not found")
 
+        # [Rest of the code remains the same as in previous version]
         # Scraping languages
         languages_element = soup.find('li', {'data-testid': 'title-details-languages'})
         languages_list = []
@@ -65,39 +106,11 @@ def scrape_imdb_id(imdb_id):
                 
                 languages_str = ', '.join(languages_list)
                 movie_data['spoken_languages'] = languages_str
+                print(f"    New Languages: {languages_str}")
             else:
                 print("    Languages not found")
         else:
             print("    Languages element not found")
-
-        # Scraping overview/plot summary
-        overview_element = soup.find('div', {'data-testid': 'storyline-plot-summary'})
-        if overview_element:
-            # Find the inner div that contains the actual text
-            inner_div = overview_element.find('div', class_='ipc-html-content-inner-div')
-            if inner_div:
-                # Get text but remove the "—Warner Bros. Pictures" part
-                overview_text = inner_div.get_text(strip=True)
-                # Split on "—" and take the first part
-                overview_text = overview_text.split('—')[0].strip()
-                movie_data['overview'] = overview_text
-            else:
-                print("    Overview inner div not found")
-        else:
-            print("    Overview element not found")
-
-        # Scraping taglines
-        taglines_element = soup.find('li', {'data-testid': 'storyline-taglines'})
-        if taglines_element:
-            tagline_span = taglines_element.find('span', class_='ipc-metadata-list-item__list-content-item')
-            if tagline_span:
-                tagline_text = tagline_span.get_text(strip=True)
-                movie_data['tagline'] = tagline_text
-                print(f"    New Tagline: {tagline_text}")
-            else:
-                print("    Tagline span not found")
-        else:
-            print("    Taglines element not found")
 
         # Scraping production companies
         companies_element = soup.find('li', {'data-testid': 'title-details-companies'})
@@ -119,7 +132,7 @@ def scrape_imdb_id(imdb_id):
         else:
             print("    Production companies element not found")
 
-        # NEW CODE: Scraping production countries
+        # Scraping production countries
         countries_element = soup.find('li', {'data-testid': 'title-details-origin'})
         countries_list = []
         
@@ -138,12 +151,73 @@ def scrape_imdb_id(imdb_id):
                 print("    Production countries links not found")
         else:
             print("    Production countries element not found")
+
+        # Scraping plot summary
+        # Find the list item with a specific ID pattern
+        plot_li = soup_summary.find('li', id=lambda x: x and x.startswith('po'))
         
+        if plot_li:
+            # Navigate through the nested divs to find the plot summary text
+            plot_div = plot_li.find('div', class_='ipc-html-content-inner-div', recursive=True)
+            
+            if plot_div:
+                overview_text = plot_div.get_text(strip=True)
+                movie_data['overview'] = overview_text
+                print(f"    New Plot Overview: {overview_text}")
+            else:
+                print("    Plot overview not found")
+        else:
+            print("    Plot overview element not found")
+
+        # Scraping plot tagline
+        # Find the specific UL with the given class
+        tagline_ul = soup_tagline.find('ul', class_='ipc-metadata-list ipc-metadata-list--dividers-between sc-bda8bbe6-0 jxZlgE meta-data-list-full ipc-metadata-list--base')
+        
+        if tagline_ul:
+            # Get the first LI and extract its text
+            first_tagline_li = tagline_ul.find('li', class_='ipc-metadata-list__item')
+            
+            if first_tagline_li:
+                tagline_div = first_tagline_li.find('div', class_='ipc-html-content-inner-div')
+                first_tagline_text = tagline_div.get_text(strip=True) if tagline_div else None
+                movie_data['tagline'] = first_tagline_text
+                print(f"    New Plot Tagline: {first_tagline_text}")
+            else:
+                print("    Plot tagline not found")
+        else:
+            print("    Plot tagline element not found")
+
+        # Scraping keywords
+        # Find the specific UL with the given class
+        keywords_ul = soup_keywords.find('ul', class_='ipc-metadata-list ipc-metadata-list--dividers-after sc-bda8bbe6-0 jxZlgE ipc-metadata-list--base')
+        
+        keywords = []
+        keywords_str = None
+        if keywords_ul:
+            # Find all LI elements with the metadata item class
+            keyword_items = keywords_ul.find_all('li', class_='ipc-metadata-list-summary-item', limit=15)
+            
+            for keyword_li in keyword_items:
+                keyword_div = keyword_li.find('a', class_='ipc-metadata-list-summary-item__t')
+                if keyword_div:
+                    keyword = keyword_div.get_text(strip=True)
+                    keywords.append(keyword)
+            if keywords:
+                keywords_str = ', '.join(keywords)
+                movie_data['keywords'] = keywords_str
+                print(f"    New Plot Keywords: {keywords_str}")
+            else:
+                print("    Plot keywords not found")
+        else:
+            print("    Plot keyword element not found")
+
+
         return movie_data
         
     except Exception as e:
         print(f"Error for movie {imdb_id}: {str(e)}")
         return None
+    
     
 def update_movie_dataset(input_file, output_file, limit=None):
     df = pd.read_csv(input_file)
@@ -168,11 +242,12 @@ def update_movie_dataset(input_file, output_file, limit=None):
         print(f"Tagline: {row['tagline']}" if not pd.isnull(row['tagline']) else "Current Tagline: None")
         print(f"Production Companies: {row['production_companies']}" if not pd.isnull(row['production_companies']) else "Current Production Companies: None")
         print(f"Production Countries: {row['production_countries']}" if not pd.isnull(row['production_countries']) else "Current Production Countries: None")
+        print(f"Keywords: {row['keywords']}" if not pd.isnull(row['keywords']) else "Current Keywords: None")
         
         if (pd.isnull(row['genres']) or pd.isnull(row['runtime']) or 
             pd.isnull(row['spoken_languages']) or pd.isnull(row['overview']) or 
             pd.isnull(row['tagline']) or pd.isnull(row['production_companies']) or
-            pd.isnull(row['production_countries'])):
+            pd.isnull(row['production_countries']) or pd.isnull(row['keywords'])):
             
             movie_data = scrape_imdb_id(imdb_id)
         
@@ -188,4 +263,6 @@ def update_movie_dataset(input_file, output_file, limit=None):
 
 # Example usage
 if __name__ == "__main__":
+    #scrape_imdb_id("tt1606389") # The Vow (missing all)
+    scrape_imdb_id("tt1375666") # Inception (missing none)
     update_movie_dataset('og_movie_dataset.csv', 'updated_movie_dataset.csv', limit=None)
