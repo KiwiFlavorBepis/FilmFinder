@@ -25,12 +25,10 @@ def scrape_imdb_id(imdb_id):
     url = f"https://www.imdb.com/title/{imdb_id}/"
     response = requests.get(url , headers=header)
     
-    #Check for success
-    if response.status_code != SUCCESS_CODE:
+    if response.status_code != 200:
         print(f"Error: Status code {response.status_code} for {imdb_id}")
         return None
     
-    #Return parsed HTML data
     soup = BeautifulSoup(response.text, 'html.parser')
 
     # scraping from plot summary url
