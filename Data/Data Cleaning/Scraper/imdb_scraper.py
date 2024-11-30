@@ -219,17 +219,27 @@ def scrape_imdb_id(imdb_id):
         return None
     
     
-def update_movie_dataset(input_file, output_file, limit=None):
+def update_movie_dataset(input_file, output_file, start_line=None, end_line=None):
+    #scrapes movies from the [start_line]'th line and ends at the [end_line]'th line
+    # Read the entire CSV file
     df = pd.read_csv(input_file)
     
+    # Adjust start and end lines if not specified
+    if start_line is None:
+        start_line = 0
+    if end_line is None:
+        end_line = len(df)
+    
+    # Slice the DataFrame to the specified range
+    df_subset = df.iloc[start_line:end_line]
+    
     print("\n Scraping start")
-    print(f"Total movies in dataset: {len(df)}")
-    if limit:
-        print(f"Scrape first {limit} movies")
+    print(f"Total movies in dataset: {len(df_subset)}")
+    print(f"Processing from line {start_line} to {end_line}")
     print("\n")
     
     counter = 0
-    for index, row in df.iterrows():
+    for index, row in df_subset.iterrows():
         imdb_id = row['imdb_id']
         
         print(f"\nMovie {counter + 1}:")
@@ -250,14 +260,38 @@ def update_movie_dataset(input_file, output_file, limit=None):
             pd.isnull(row['production_countries']) or pd.isnull(row['keywords'])):
             
             movie_data = scrape_imdb_id(imdb_id)
+            
+            # Only update columns that are currently None/NaN
+            if pd.isnull(row['genres']) and 'genres' in movie_data:
+                df.at[index, 'genres'] = movie_data['genres']
+            
+            if pd.isnull(row['runtime']) and 'runtime' in movie_data:
+                df.at[index, 'runtime'] = movie_data['runtime']
+            
+            if pd.isnull(row['spoken_languages']) and 'languages' in movie_data:
+                df.at[index, 'spoken_languages'] = movie_data['languages']
+            
+            if pd.isnull(row['overview']) and 'plot_overview' in movie_data:
+                df.at[index, 'overview'] = movie_data['plot_overview']
+            
+            if pd.isnull(row['tagline']) and 'plot_tagline' in movie_data:
+                df.at[index, 'tagline'] = movie_data['plot_tagline']
+            
+            if pd.isnull(row['production_companies']) and 'production_companies' in movie_data:
+                df.at[index, 'production_companies'] = movie_data['production_companies']
+            
+            if pd.isnull(row['production_countries']) and 'production_countries' in movie_data:
+                df.at[index, 'production_countries'] = movie_data['production_countries']
+            
+            if pd.isnull(row['keywords']) and 'plot_keywords' in movie_data:
+                df.at[index, 'keywords'] = movie_data['plot_keywords']
         
         print("-" * 50)
         
         counter += 1
-        if limit and counter >= limit:
-            break
     
-    df.to_csv(output_file, index=False)
+    # Save only the processed subset
+    df_subset.to_csv(output_file, index=False)
     print(f"Processed {counter} movies")
     print(f"Data saved to output file")
 
@@ -265,4 +299,4 @@ def update_movie_dataset(input_file, output_file, limit=None):
 if __name__ == "__main__":
     #scrape_imdb_id("tt1606389") # The Vow (missing all)
     scrape_imdb_id("tt1375666") # Inception (missing none)
-    update_movie_dataset('og_movie_dataset.csv', 'updated_movie_dataset.csv', limit=None)
+    update_movie_dataset('modern_feature_films.csv', 'updated_movie_dataset.csv', 48, 54)

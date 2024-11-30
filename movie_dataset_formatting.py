@@ -8,12 +8,12 @@ cov.start()
 
 def clean_data():
     # cleaning data formatting
-    with open('og_movie_dataset.csv', 'r', encoding='utf-8') as file:
+    with open('modern_feature_films.csv', 'r', encoding='utf-8') as file:
         content = file.read()
 
     cleaned_content = content.replace('\u2028', '\n').replace('\u2029', '\n')
 
-    with open('og_movie_dataset.csv', 'w', encoding='utf-8') as cleaned_file:
+    with open('modern_feature_films.csv', 'w', encoding='utf-8') as cleaned_file:
         cleaned_file.write(cleaned_content)
 
 clean_data()
