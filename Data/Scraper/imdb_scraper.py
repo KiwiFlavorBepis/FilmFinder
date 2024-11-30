@@ -476,7 +476,7 @@ def update_movie_dataset(input_file, output_file, start_line=None, end_line=None
     print(f"Processing from line {start_line} to {end_line}")
     print("\n")
     
-    counter = 0
+    counter = start_line - 1
     for index, row in df_subset.iterrows():
         imdb_id = row['imdb_id']
         
@@ -535,6 +535,5 @@ def update_movie_dataset(input_file, output_file, start_line=None, end_line=None
 
 # Example usage
 if __name__ == "__main__":
-    #scrape_imdb_id("tt1606389") # The Vow (missing all)
-    scrape_imdb_id("tt1375666") # Inception (missing none)
-    update_movie_dataset('modern_feature_films.csv', 'updated_movie_dataset.csv', 1, 78552)
+    #update_movie_dataset('modern_feature_films.csv', 'updated_movie_dataset.csv', 1, 78552)
+    update_movie_dataset('modern_feature_films.csv', 'updated_movie_dataset.csv', 3, 9)
