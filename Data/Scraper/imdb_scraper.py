@@ -548,18 +548,9 @@ if __name__ == "__main__":
     # Define the input and output file paths
     input_file = 'modern_feature_films.csv'\
 
-    # Select a range of rows (0 indexed inclusive) e.g. the first 100 movies would be 0-99
+    # Select a range of rows (0 indexed AND inclusive) e.g. the first 100 movies would be 0-99, the next 100 would be 100-199
     start_row = 100
-    end_row = 200
+    end_row = 199
     saveInterval = 50
 
     update_movie_dataset('modern_feature_films.csv', saveInterval, start_row + 1, end_row + 1)
-
-
-
-
-
-
-
-
-
