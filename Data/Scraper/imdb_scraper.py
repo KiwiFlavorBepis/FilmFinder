@@ -457,7 +457,7 @@ def scrape_imdb_id(imdb_id):
 #         print(f"Error for movie {imdb_id}: {str(e)}")
 #         return None
 
-def update_movie_dataset(input_file, output_file, start_line=None, end_line=None):
+def update_movie_dataset(input_file, saveInterval, start_line=None, end_line=None):
     #scrapes movies from the [start_line]'th line and ends at the [end_line]'th line
     # Read the entire CSV file
     df = pd.read_csv(input_file)
@@ -469,71 +469,97 @@ def update_movie_dataset(input_file, output_file, start_line=None, end_line=None
         end_line = len(df)
     
     # Slice the DataFrame to the specified range
-    df_subset = df.iloc[start_line:end_line]
+    
     
     print("\n Scraping start")
-    print(f"Total movies in dataset: {len(df_subset)}")
+    print(f"Total movies in dataset: {end_line - start_line}")
     print(f"Processing from line {start_line} to {end_line}")
     print("\n")
     
     counter = start_line - 1
-    for index, row in df_subset.iterrows():
-        imdb_id = row['imdb_id']
-        
-        print(f"\nMovie {counter + 1}:")
-        print(f"Title: {row['title']}")
-        print(f"IMDb ID: {imdb_id}")
-        print(f"Runtime: {row['runtime']}")
-        print(f"Genres: {row['genres']}")
-        print(f"Languages: {row['spoken_languages']}")
-        print(f"Overview: {row['overview'][:100]}..." if not pd.isnull(row['overview']) else "Current Overview: None")
-        print(f"Tagline: {row['tagline']}" if not pd.isnull(row['tagline']) else "Current Tagline: None")
-        print(f"Production Companies: {row['production_companies']}" if not pd.isnull(row['production_companies']) else "Current Production Companies: None")
-        print(f"Production Countries: {row['production_countries']}" if not pd.isnull(row['production_countries']) else "Current Production Countries: None")
-        print(f"Keywords: {row['keywords']}" if not pd.isnull(row['keywords']) else "Current Keywords: None")
-        
-        if (pd.isnull(row['genres']) or pd.isnull(row['runtime']) or 
-            pd.isnull(row['spoken_languages']) or pd.isnull(row['overview']) or 
-            pd.isnull(row['tagline']) or pd.isnull(row['production_companies']) or
-            pd.isnull(row['production_countries']) or pd.isnull(row['keywords'])):
+    while counter < end_line :
+        df_subset = df.iloc[counter: (counter + saveInterval)]
+        for index, row in df_subset.iterrows():
+            imdb_id = row['imdb_id']
             
-            movie_data = scrape_imdb_id(imdb_id)
+            print(f"\nMovie {counter + 1}:")
+            print(f"Title: {row['title']}")
+            print(f"IMDb ID: {imdb_id}")
+            print(f"Runtime: {row['runtime']}")
+            print(f"Genres: {row['genres']}")
+            print(f"Languages: {row['spoken_languages']}")
+            print(f"Overview: {row['overview'][:100]}..." if not pd.isnull(row['overview']) else "Current Overview: None")
+            print(f"Tagline: {row['tagline']}" if not pd.isnull(row['tagline']) else "Current Tagline: None")
+            print(f"Production Companies: {row['production_companies']}" if not pd.isnull(row['production_companies']) else "Current Production Companies: None")
+            print(f"Production Countries: {row['production_countries']}" if not pd.isnull(row['production_countries']) else "Current Production Countries: None")
+            print(f"Keywords: {row['keywords']}" if not pd.isnull(row['keywords']) else "Current Keywords: None")
             
-            # Only update columns that are currently None/NaN
-            if pd.isnull(row['genres']) and 'genres' in movie_data:
-                df.at[index, 'genres'] = movie_data['genres']
+            if (pd.isnull(row['genres']) or pd.isnull(row['runtime']) or 
+                pd.isnull(row['spoken_languages']) or pd.isnull(row['overview']) or 
+                pd.isnull(row['tagline']) or pd.isnull(row['production_companies']) or
+                pd.isnull(row['production_countries']) or pd.isnull(row['keywords'])):
+                
+                movie_data = scrape_imdb_id(imdb_id)
+                
+                # Only update columns that are currently None/NaN
+                if pd.isnull(row['genres']) and 'genres' in movie_data:
+                    df.at[index, 'genres'] = movie_data['genres']
+                
+                if pd.isnull(row['runtime']) and 'runtime' in movie_data:
+                    df.at[index, 'runtime'] = movie_data['runtime']
+                
+                if pd.isnull(row['spoken_languages']) and 'languages' in movie_data:
+                    df.at[index, 'spoken_languages'] = movie_data['languages']
+                
+                if pd.isnull(row['overview']) and 'plot_overview' in movie_data:
+                    df.at[index, 'overview'] = movie_data['plot_overview']
+                
+                if pd.isnull(row['tagline']) and 'plot_tagline' in movie_data:
+                    df.at[index, 'tagline'] = movie_data['plot_tagline']
+                
+                if pd.isnull(row['production_companies']) and 'production_companies' in movie_data:
+                    df.at[index, 'production_companies'] = movie_data['production_companies']
+                
+                if pd.isnull(row['production_countries']) and 'production_countries' in movie_data:
+                    df.at[index, 'production_countries'] = movie_data['production_countries']
+                
+                if pd.isnull(row['keywords']) and 'plot_keywords' in movie_data:
+                    df.at[index, 'keywords'] = movie_data['plot_keywords']
             
-            if pd.isnull(row['runtime']) and 'runtime' in movie_data:
-                df.at[index, 'runtime'] = movie_data['runtime']
+            counter += 1
             
-            if pd.isnull(row['spoken_languages']) and 'languages' in movie_data:
-                df.at[index, 'spoken_languages'] = movie_data['languages']
-            
-            if pd.isnull(row['overview']) and 'plot_overview' in movie_data:
-                df.at[index, 'overview'] = movie_data['plot_overview']
-            
-            if pd.isnull(row['tagline']) and 'plot_tagline' in movie_data:
-                df.at[index, 'tagline'] = movie_data['plot_tagline']
-            
-            if pd.isnull(row['production_companies']) and 'production_companies' in movie_data:
-                df.at[index, 'production_companies'] = movie_data['production_companies']
-            
-            if pd.isnull(row['production_countries']) and 'production_countries' in movie_data:
-                df.at[index, 'production_countries'] = movie_data['production_countries']
-            
-            if pd.isnull(row['keywords']) and 'plot_keywords' in movie_data:
-                df.at[index, 'keywords'] = movie_data['plot_keywords']
-        
-        print("-" * 50)
-        
-        counter += 1
-    
-    # Save only the processed subset
-    df_subset.to_csv(output_file, index=False)
-    print(f"Processed {counter} movies")
-    print(f"Data saved to output file")
+            print("-" * 50)
 
-# Example usage
+        sectionStart = counter - saveInterval
+        name = "scraped_" + str(sectionStart) + "_" + str(counter - 1) + ".csv"
+        df_subset.to_csv(name, index=False)
+        numScrapesLeft = saveInterval
+
+        df_subset = df.iloc[counter:(counter + saveInterval - 1)]
+        print("Scraping save")
+    print("Scraping finished")
+    
+
+
+
+
+#example usage:
 if __name__ == "__main__":
-    #update_movie_dataset('modern_feature_films.csv', 'updated_movie_dataset.csv', 1, 78552)
-    update_movie_dataset('modern_feature_films.csv', 'updated_movie_dataset.csv', 3, 9)
+    # Define the input and output file paths
+    input_file = 'modern_feature_films.csv'\
+
+    # Select a range of rows (0 indexed inclusive) e.g. the first 100 movies would be 0-99
+    start_row = 100
+    end_row = 200
+    saveInterval = 50
+
+    update_movie_dataset('modern_feature_films.csv', saveInterval, start_row + 1, end_row + 1)
+
+
+
+
+
+
+
+
+
