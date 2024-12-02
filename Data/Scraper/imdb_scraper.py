@@ -227,16 +227,38 @@ def scrape_imdb_id(imdb_id):
         else:
             print("    Plot tagline element not found")
 
-        # Scraping keywords
-        keywords_ul = soup_keywords.find('ul', class_='ipc-metadata-list ipc-metadata-list--dividers-after sc-bda8bbe6-0 jxZlgE ipc-metadata-list--base')
+        # # Scraping keywords
+        # keywords_ul = soup_keywords.find('ul', class_='ipc-metadata-list ipc-metadata-list--dividers-after sc-bda8bbe6-0 jxZlgE ipc-metadata-list--base')
         
+        # keywords = []
+        # keywords_str = None
+        # if keywords_ul:
+        #     keyword_items = keywords_ul.find_all('li', class_='ipc-metadata-list-summary-item', limit=15)
+            
+        #     for keyword_li in keyword_items:
+        #         keyword_div = keyword_li.find('a', class_='ipc-metadata-list-summary-item__t')
+        #         if keyword_div:
+        #             keyword = keyword_div.get_text(strip=True)
+        #             keywords.append(keyword)
+        #     if keywords:
+        #         keywords_str = ', '.join(keywords)
+        #         movie_data['keywords'] = keywords_str
+        #         print(f"    New Plot Keywords: {keywords_str}")
+        #     else:
+        #         print("    Plot keywords not found")
+        # else:
+        #     print("    Plot keyword element not found")
+
+        # Scraping keywords
+        keywords_ul = soup_keywords.find('ul', class_=lambda x: x and 'ipc-metadata-list' in x)
+
         keywords = []
         keywords_str = None
         if keywords_ul:
-            keyword_items = keywords_ul.find_all('li', class_='ipc-metadata-list-summary-item', limit=15)
+            keyword_items = keywords_ul.find_all('li', class_=lambda x: x and 'ipc-metadata-list-summary-item' in x, limit=15)
             
             for keyword_li in keyword_items:
-                keyword_div = keyword_li.find('a', class_='ipc-metadata-list-summary-item__t')
+                keyword_div = keyword_li.find('a', class_=lambda x: x and 'ipc-metadata-list-summary-item__t' in x)
                 if keyword_div:
                     keyword = keyword_div.get_text(strip=True)
                     keywords.append(keyword)
@@ -458,31 +480,35 @@ def scrape_imdb_id(imdb_id):
 #         return None
 
 def update_movie_dataset(input_file, saveInterval, start_line=None, end_line=None):
-    #scrapes movies from the [start_line]'th line and ends at the [end_line]'th line
+
     # Read the entire CSV file
     df = pd.read_csv(input_file)
     
-    # Adjust start and end lines if not specified
+    # Adjust start and end lines to account for header row
+    # Subtract 1 from start and end to align with zero-indexed rows after header
     if start_line is None:
         start_line = 0
+    else:
+        start_line = start_line - 1
+    
     if end_line is None:
         end_line = len(df)
-    
-    # Slice the DataFrame to the specified range
-    
+    else:
+        end_line = end_line - 1
     
     print("\n Scraping start")
-    print(f"Total movies in dataset: {end_line - start_line}")
-    print(f"Processing from line {start_line} to {end_line}")
+    print(f"Total movies in dataset: {end_line - start_line + 1}")
+    print(f"Processing from movie {start_line + 1} to movie {end_line + 1}")
     print("\n")
     
-    counter = start_line - 1
-    while counter < end_line :
+    counter = start_line
+    while counter <= end_line:
         df_subset = df.iloc[counter: (counter + saveInterval)]
         for index, row in df_subset.iterrows():
             imdb_id = row['imdb_id']
             
-            print(f"\nMovie {counter + 1}:")
+            # Print the movie number as per user's requirement (adding 2 to account for header)
+            print(f"\nMovie {index + 1}:")
             print(f"Title: {row['title']}")
             print(f"IMDb ID: {imdb_id}")
             print(f"Runtime: {row['runtime']}")
@@ -500,6 +526,15 @@ def update_movie_dataset(input_file, saveInterval, start_line=None, end_line=Non
                 pd.isnull(row['production_countries']) or pd.isnull(row['keywords'])):
                 
                 movie_data = scrape_imdb_id(imdb_id)
+
+                # Add this check to skip movies with invalid URLs or scraping failures
+                if movie_data is None:
+                    print(f"Skipping movie {imdb_id} due to scraping failure")
+                    counter += 1
+                    if (counter > end_line):
+                        break
+                    continue
+                
                 try: 
                     # Only update columns that are currently None/NaN
                     if pd.isnull(row['genres']) and 'genres' in movie_data:
@@ -508,14 +543,14 @@ def update_movie_dataset(input_file, saveInterval, start_line=None, end_line=Non
                     if pd.isnull(row['runtime']) and 'runtime' in movie_data:
                         df.at[index, 'runtime'] = movie_data['runtime']
                     
-                    if pd.isnull(row['spoken_languages']) and 'languages' in movie_data:
-                        df.at[index, 'spoken_languages'] = movie_data['languages']
+                    if pd.isnull(row['spoken_languages']) and 'spoken_languages' in movie_data:
+                        df.at[index, 'spoken_languages'] = movie_data['spoken_languages']
                     
-                    if pd.isnull(row['overview']) and 'plot_overview' in movie_data:
-                        df.at[index, 'overview'] = movie_data['plot_overview']
+                    if pd.isnull(row['overview']) and 'overview' in movie_data:
+                        df.at[index, 'overview'] = movie_data['overview']
                     
-                    if pd.isnull(row['tagline']) and 'plot_tagline' in movie_data:
-                        df.at[index, 'tagline'] = movie_data['plot_tagline']
+                    if pd.isnull(row['tagline']) and 'tagline' in movie_data:
+                        df.at[index, 'tagline'] = movie_data['tagline']
                     
                     if pd.isnull(row['production_companies']) and 'production_companies' in movie_data:
                         df.at[index, 'production_companies'] = movie_data['production_companies']
@@ -523,36 +558,34 @@ def update_movie_dataset(input_file, saveInterval, start_line=None, end_line=Non
                     if pd.isnull(row['production_countries']) and 'production_countries' in movie_data:
                         df.at[index, 'production_countries'] = movie_data['production_countries']
                     
-                    if pd.isnull(row['keywords']) and 'plot_keywords' in movie_data:
-                        df.at[index, 'keywords'] = movie_data['plot_keywords']
+                    if pd.isnull(row['keywords']) and 'keywords' in movie_data:
+                        df.at[index, 'keywords'] = movie_data['keywords']
                 except Exception as e:
                     print(f"Error: {e}")
             
             counter += 1
+            if (counter > end_line):
+                break
             
             print("-" * 50)
 
         sectionStart = counter - saveInterval
-        name = "scraped_" + str(sectionStart) + "_" + str(counter - 1) + ".csv"
+        name = "scraped_" + str(sectionStart + 1) + "_" + str(counter + 1) + ".csv"
         df_subset.to_csv(name, index=False)
         numScrapesLeft = saveInterval
 
         df_subset = df.iloc[counter:(counter + saveInterval - 1)]
         print("Scraping save")
     print("Scraping finished")
-    
 
-
-
-
-#example usage:
+# Example usage:
 if __name__ == "__main__":
-    # Define the input and output file paths
-    input_file = 'modern_feature_films.csv'\
-
-    # Select a range of rows (0 indexed AND inclusive) e.g. the first 100 movies would be 0-99, the next 100 would be 100-199
-    start_row = 155000
-    end_row = 234999
+    input_file = 'modern_feature_films.csv'
+    
+    # Now you can specify the movie numbers as they appear in the terminal
+    # e.g., to scrape the 11743rd movie, you'd use:
+    start = 1
+    end = 1
     saveInterval = 1000
-
-    update_movie_dataset('modern_feature_films.csv', saveInterval, start_row + 1, end_row + 1)
+    
+    update_movie_dataset(input_file, saveInterval, start, end)
