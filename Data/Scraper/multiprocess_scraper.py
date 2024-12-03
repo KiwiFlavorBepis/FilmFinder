@@ -58,8 +58,9 @@ def create_retry_session(retries=5, backoff_factor=0.5, status_forcelist=(500, 5
 
 
 def scrape_imdb_id(imdb_id, **kwargs):
-
     column = kwargs.get('column', 'all')
+
+    print(f"\nScraping for {imdb_id} (Columns: {column})")
 
     # Create a session with retry capabilities
     session = create_retry_session()
@@ -121,7 +122,7 @@ def scrape_imdb_id(imdb_id, **kwargs):
         responses[column] = response
 
     movie_data = {}
-
+    print(f"\nParsing scraped data for {imdb_id}")
     try:
         if column == 'all' or column != 'overview' or column != 'tagline' or column != 'keywords':
             soup = BeautifulSoup(responses['main'].text, 'html.parser')
@@ -202,7 +203,11 @@ def scrape_imdb_id(imdb_id, **kwargs):
                     print("    Production countries links not found")
             else:
                 print("    Production countries element not found")
+    except Exception as e:
+        print(f"    Couldn't parse {imdb_id} (Column: {column}): {urls['main']} : {e}")
+        return None
 
+    try:
         if column == 'overview':
             soup_summary = BeautifulSoup(responses['summary'].text, 'html.parser')
             # Scraping plot summary
@@ -219,7 +224,11 @@ def scrape_imdb_id(imdb_id, **kwargs):
                     print("    Plot overview not found")
             else:
                 print("    Plot overview element not found")
+    except Exception as e:
+        print(f"    Couldn't parse {imdb_id} (Column: {column}): {urls['summary']} : {e}")
+        return None
 
+    try:
         if column == 'tagline':
             soup_tagline = BeautifulSoup(responses['tagline'].text, 'html.parser')
             # Scraping plot tagline
@@ -236,7 +245,11 @@ def scrape_imdb_id(imdb_id, **kwargs):
                     print("    Plot tagline not found")
             else:
                 print("    Plot tagline element not found")
+    except Exception as e:
+        print(f"    Couldn't parse {imdb_id} (Column: {column}): {urls['tagline']} : {e}")
+        return None
 
+    try:
         if column == 'keywords':
             soup_keywords = BeautifulSoup(responses['keywords'].text, 'html.parser')
             # Scraping keywords
@@ -260,12 +273,12 @@ def scrape_imdb_id(imdb_id, **kwargs):
                     print("    Plot keywords not found")
             else:
                 print("    Plot keyword element not found")
-
-        return movie_data
-
     except Exception as e:
-        print(f"Error for movie {imdb_id}: {str(e)}")
+        print(f"    Couldn't parse {imdb_id} (Column: {column}): {urls['keywords']} : {e}")
         return None
+
+    print()
+    return movie_data
 
 def print_movie_data(index, movie, **kwargs):
     verbose = kwargs.get('verbose', False)
@@ -356,10 +369,10 @@ if __name__ == "__main__":
     start = time.time()
 
     input_file = '../Datasets/clean.csv'
-    start_line = 0
-    end_line = 300
+    start_line = 80001
+    end_line = 90000
 
-    results = update_movie_dataset(input_file, start_line=start_line, end_line=end_line, processes=2)
+    results = update_movie_dataset(input_file, start_line=start_line, end_line=end_line, processes=14)
     output = pd.concat(results).drop('Unnamed: 0', axis=1)
     output.to_csv(f'../Datasets/scraped_{start_line}_{end_line}.csv')
     print(f"Took {time.time() - start} seconds to process {end_line - start_line} movies")
