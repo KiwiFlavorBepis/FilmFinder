@@ -585,7 +585,7 @@ if __name__ == "__main__":
     # Now you can specify the movie numbers as they appear in the terminal
     # e.g., to scrape the 11743rd movie, you'd use:
     start = 1
-    end = 1
+    end = 62842
     saveInterval = 1000
     
     update_movie_dataset(input_file, saveInterval, start, end)
