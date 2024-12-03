@@ -58,8 +58,9 @@ def create_retry_session(retries=5, backoff_factor=0.5, status_forcelist=(500, 5
 
 
 def scrape_imdb_id(imdb_id, **kwargs):
-
     column = kwargs.get('column', 'all')
+
+    print(f"\nScraping for {imdb_id} (Columns: {column})")
 
     # Create a session with retry capabilities
     session = create_retry_session()
@@ -121,7 +122,7 @@ def scrape_imdb_id(imdb_id, **kwargs):
         responses[column] = response
 
     movie_data = {}
-
+    print(f"\nParsing scraped data for {imdb_id}")
     try:
         if column == 'all' or column != 'overview' or column != 'tagline' or column != 'keywords':
             soup = BeautifulSoup(responses['main'].text, 'html.parser')
@@ -202,7 +203,11 @@ def scrape_imdb_id(imdb_id, **kwargs):
                     print("    Production countries links not found")
             else:
                 print("    Production countries element not found")
+    except Exception as e:
+        print(f"    Couldn't parse {imdb_id} (Column: {column}): {e}")
+        return None
 
+    try:
         if column == 'overview':
             soup_summary = BeautifulSoup(responses['summary'].text, 'html.parser')
             # Scraping plot summary
@@ -236,7 +241,11 @@ def scrape_imdb_id(imdb_id, **kwargs):
                     print("    Plot tagline not found")
             else:
                 print("    Plot tagline element not found")
+    except Exception as e:
+        print(f"    Couldn't parse {imdb_id} (Column: {column}): {e}")
+        return None
 
+    try:
         if column == 'keywords':
             soup_keywords = BeautifulSoup(responses['keywords'].text, 'html.parser')
             # Scraping keywords
@@ -260,12 +269,12 @@ def scrape_imdb_id(imdb_id, **kwargs):
                     print("    Plot keywords not found")
             else:
                 print("    Plot keyword element not found")
-
-        return movie_data
-
     except Exception as e:
-        print(f"Error for movie {imdb_id}: {str(e)}")
+        print(f"    Couldn't parse {imdb_id} (Column: {column}): {e}")
         return None
+
+    print()
+    return movie_data
 
 def print_movie_data(index, movie, **kwargs):
     verbose = kwargs.get('verbose', False)
