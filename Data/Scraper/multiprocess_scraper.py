@@ -344,6 +344,7 @@ def update_movie_dataset(input_file, **kwargs):
     end_line = kwargs.get('end_line', len(df))
     processes = kwargs.get('processes', 4)
 
+    end_line += 1
     df_subset = df.iloc[start_line : end_line]
 
     if processes == multiprocessing.cpu_count():
@@ -366,13 +367,13 @@ def update_movie_dataset(input_file, **kwargs):
 
 # Example usage:
 if __name__ == "__main__":
-    start = time.time()
 
     input_file = '../Datasets/clean.csv'
-    start_line = 80001
-    end_line = 90000
+    start_line = 100
+    end_line = 200 #inclusive
 
-    results = update_movie_dataset(input_file, start_line=start_line, end_line=end_line, processes=14)
+    start = time.time()
+    results = update_movie_dataset(input_file, start_line=start_line, end_line=end_line, processes=15)
     output = pd.concat(results).drop('Unnamed: 0', axis=1)
     output.to_csv(f'../Datasets/scraped_{start_line}_{end_line}.csv')
-    print(f"Took {time.time() - start} seconds to process {end_line - start_line} movies")
+    print(f"Took {time.time() - start} seconds to process {end_line - start_line + 1} movies")
