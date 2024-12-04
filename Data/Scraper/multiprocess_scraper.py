@@ -364,7 +364,7 @@ def update_movie_dataset(input_file, **kwargs):
 if __name__ == "__main__":
     start = time.time()
 
-    input_file = '../Datasets/clean.csv'
+    input_file = 'modern_feature_films.csv'
     start_line = 0
     end_line = 300
 
