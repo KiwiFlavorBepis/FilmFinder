@@ -11,21 +11,96 @@
         <h1 id="filmfinder" style="color:#653239">FilmFinder</h1>
         
         <form>
+            <h3> Filters </h3>
+            <div>
+                <label for="genreFilter"><strong>Genre</strong></label>
+                <select id="genreFilter">
+                    <option value="none">None</option>
+                    <option value="action">Action</option>
+                    <option value="adventure">Adventure</option>
+                    <option value="animation">Animation</option>
+                    <option value="biography">Biography</option>
+                    <option value="comedy">Comedy</option>
+                    <option value="crime">Crime</option>
+                    <option value="documentary">Documentary</option>
+                    <option value="drama">Drama</option>
+                    <option value="family">Family</option>
+                    <option value="fantasy">Fantasy</option>
+                    <option value="film-noir">Film Noir</option>
+                    <option value="game-show">Game Show</option>
+                    <option value="history">History</option>
+                    <option value="horror">Horror</option>
+                    <option value="musical">Musical</option>
+                    <option value="music">Music</option>
+                    <option value="mystery">Mystery</option>
+                    <option value="news">News</option>
+                    <option value="reality-tv">Reality-TV</option>
+                    <option value="romance">Romance</option>
+                    <option value="sci-fi">Sci-Fi</option>
+                    <option value="short">Short</option>
+                    <option value="sport">Sport</option>
+                    <option value="talk-show">Talk-Show</option>
+                    <option value="thriller">Thriller</option>
+                    <option value="war">War</option>
+                    <option value="western">Western</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="languageFilter"><strong>Language</strong></label>
+                <select id="languageFilter">
+                    <option value="none">None</option>
+                    <option value="english">English</option>
+                    <option value="spanish">Spanish</option>
+                    <option value="french">French</option>
+                    <option value="german">German</option>
+                    <option value="italian">Italian</option>
+                    <option value="portuguese">Portuguese</option>
+                    <option value="chinese">Chinese</option>
+                    <option value="japanese">Japanese</option>
+                    <option value="korean">Korean</option>
+                    <option value="russian">Russian</option>
+                    <option value="arabic">Arabic</option>
+                    <option value="hindi">Hindi</option>
+                    <option value="bengali">Bengali</option>
+                    <option value="turkish">Turkish</option>
+                    <option value="dutch">Dutch</option>
+                    <option value="polish">Polish</option>
+                    <option value="swedish">Swedish</option>
+                    <option value="norwegian">Norwegian</option>
+                    <option value="danish">Danish</option>
+                    <option value="finnish">Finnish</option>
+                    <option value="greek">Greek</option>
+                    <option value="thai">Thai</option>
+                    <option value="vietnamese">Vietnamese</option>
+                </select>
+            </div>
+
+            <!-- Visual separator -->
+            <hr style="border: 1px solid #653239; margin: 20px 0;">
+
+            <h3> Parameters </h3>
+            <div>
+                <label for="title"><strong>Title:</strong></label>
+                <input type="text" id="title" placeholder="Enter title or leave blank">
+                <div id="titleError" class="error"></div>
+            </div>
+
             <div>
                 <label for="plotSummary"><strong>Plot Summary:</strong></label>
-                <input type="text" id="plotSummary">
+                <input type="text" id="plotSummary" placeholder="Enter plot summary or leave blank">
                 <div id="plotSummaryError" class="error"></div>
             </div>
 
             <div>
                 <label for="genre"><strong>Genre:</strong></label>
-                <input type="text" id="genre">
+                <input type="text" id="genre" placeholder="Enter genres or leave blank">
                 <div id="genreError" class="error"></div>
             </div>
 
             <div>
                 <label for="keywords"><strong>Keywords:</strong></label>
-                <input type="text" id="keywords">
+                <input type="text" id="keywords" placeholder="Enter keywords or leave blank">
                 <div id="keywordsError" class="error"></div>
             </div>
 
