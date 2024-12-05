@@ -318,7 +318,7 @@ if __name__ == "__main__":
     
     # Now you can specify the movie numbers as they appear in the terminal
     # e.g., to scrape the 11743rd movie, you'd use:
-    start = 188_527
+    start = 208_527
     end = 220_000
     saveInterval = 1000
     

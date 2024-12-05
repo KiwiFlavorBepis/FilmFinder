@@ -9,6 +9,10 @@ body {
     padding: 20px;
 }
 
+textarea::placeholder {
+    font-family: Arial, sans-serif;
+}
+
 form {
     max-width: 600px;
     margin: 0 auto;
@@ -19,7 +23,7 @@ form {
     overflow: hidden;
 }
 
-input[type="text"], select {
+input[type="text"], select{
     width: calc(100% - 20px);
     padding: 10px;
     margin: 10px 0;
@@ -29,6 +33,19 @@ input[type="text"], select {
     color: #000;
     box-sizing: border-box;
 }
+
+textarea {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 2px solid #575656;
+    border-radius: 5px;
+    background-color: #e7e7e7;
+    color: #000;
+    box-sizing: border-box;
+}
+
+
 
 input[type="text"]:focus, select:focus {
     border-color: #653239;

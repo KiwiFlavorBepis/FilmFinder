@@ -371,7 +371,6 @@ if __name__ == "__main__":
     input_file = '../Datasets/clean.csv'
     start_line = 100
     end_line = 200 #inclusive
-
     start = time.time()
     results = update_movie_dataset(input_file, start_line=start_line, end_line=end_line, processes=15)
     output = pd.concat(results).drop('Unnamed: 0', axis=1)
