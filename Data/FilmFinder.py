@@ -1,7 +1,5 @@
 from scipy.spatial.distance import euclidean
 import pandas as pd
-import numpy as np
-import ast
 import sys
 import warnings
 
