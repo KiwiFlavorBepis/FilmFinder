@@ -13,8 +13,8 @@ def find_similar_movies_by_genre(movie, df, k):
 
 
 def find_similar_movies_by_summary(movie, df, k):
-    movie_cluster = df.loc[df['title'] == movie, 'summary_cluster']
-    cluster_movies = df[df['summary_cluster'] == movie_cluster]
+    movie_cluster = df.loc[df['title'] == movie, 'overview_cluster']
+    cluster_movies = df[df['overview_cluster'] == movie_cluster]
     cluster_movies['distance'] = cluster_movies['embedded_overview'].apply(
         lambda x: euclidean(movie, x)
     )
@@ -33,8 +33,9 @@ def find_similar_movies_by_keywords(movie, df, k):
 
 
 def main():
-    file_name = "movie_database.xlsx"
-    df = pd.read_excel(file_name)
+    file_name = "movie_database.csv"
+    df = pd.read_csv(file_name, dtype={'combined_genres': float, 'embedded_overview': float, 'combined_keywords': float,
+                                       'overview_cluster': int, 'genre_cluster': int, 'keyword_cluster': int})
 
     num_movies = int(input("Enter the number of similar films you want: "))
     movie_name = input("Enter the name of the movie: ")
