@@ -1,0 +1,2 @@
+# This .gitignore is redundant but also exists to keep the Datasets directory tracked
+*.csv
