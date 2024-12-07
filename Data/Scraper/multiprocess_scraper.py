@@ -9,9 +9,10 @@ from requests.adapters import HTTPAdapter
 import time
 import random
 
+# an attempt at multiprocess scraping using the code from imdb_scraper.py
 
 def parse_runtime_to_minutes(runtime_text):
-    """Convert runtime text to minutes."""
+
     hours_match = re.search(r'(\d+)hours?', runtime_text)
     minutes_match = re.search(r'(\d+)minutes?', runtime_text)
 
@@ -25,32 +26,20 @@ def parse_runtime_to_minutes(runtime_text):
 
 
 def create_retry_session(retries=5, backoff_factor=0.5, status_forcelist=(500, 502, 504, 429, 403), session=None):
-    """
-    Create a requests session with retry capabilities.
 
-    :param retries: Number of times to retry the request
-    :param backoff_factor: Delay between retries increases exponentially
-    :param status_forcelist: HTTP status codes to retry on
-    :param session: Optional existing session to add retry capabilities
-    :return: A requests session with retry mechanism
-    """
-    # Use existing session or create a new one
     session = session or requests.Session()
 
-    # Configure retry strategy
     retry = Retry(
-        total=retries,  # Total number of retries
-        read=retries,  # Retries for read errors
-        connect=retries,  # Retries for connection errors
-        backoff_factor=backoff_factor,  # Exponential backoff
-        status_forcelist=status_forcelist,  # HTTP status codes to retry
-        raise_on_status=False  # Don't raise an exception on status error
+        total=retries,
+        read=retries,
+        connect=retries,
+        backoff_factor=backoff_factor,
+        status_forcelist=status_forcelist,
+        raise_on_status=False
     )
 
-    # Create an adapter with the retry strategy
     adapter = HTTPAdapter(max_retries=retry)
 
-    # Mount the adapter to both HTTP and HTTPS
     session.mount('http://', adapter)
     session.mount('https://', adapter)
 
@@ -62,10 +51,8 @@ def scrape_imdb_id(imdb_id, **kwargs):
 
     print(f"\nScraping for {imdb_id} (Columns: {column})")
 
-    # Create a session with retry capabilities
     session = create_retry_session()
 
-    # Add random delay to prevent rate limiting
     time.sleep(random.uniform(1, 5))
 
     def safe_request(url, session=session):
@@ -89,7 +76,6 @@ def scrape_imdb_id(imdb_id, **kwargs):
             print(f"Request error for {url}: {e}")
             return None
 
-    # Scraping URLs
     urls = {
         'main': f"https://www.imdb.com/title/{imdb_id}/",
         'summary': f"https://www.imdb.com/title/{imdb_id}/plotsummary/",
@@ -97,7 +83,6 @@ def scrape_imdb_id(imdb_id, **kwargs):
         'keywords': f"https://www.imdb.com/title/{imdb_id}/keywords/"
     }
 
-    # Perform requests
     responses = {}
     if column == 'all':
         for key, url in urls.items():
@@ -337,7 +322,7 @@ def process_chunk(chunk):
     return chunk
 
 def update_movie_dataset(input_file, **kwargs):
-    # Read the entire CSV file
+
     df = pd.read_csv(input_file)
 
     start_line = kwargs.get('start_line', 0)
@@ -365,7 +350,6 @@ def update_movie_dataset(input_file, **kwargs):
 
     return outputs
 
-# Example usage:
 if __name__ == "__main__":
 
     input_file = '../Datasets/clean.csv'

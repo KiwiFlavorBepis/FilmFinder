@@ -9,7 +9,7 @@ import time
 import random
 
 def parse_runtime_to_minutes(runtime_text):
-    """Convert runtime text to minutes."""
+    # converting runtime to correct format
     hours_match = re.search(r'(\d+)hours?', runtime_text)
     minutes_match = re.search(r'(\d+)minutes?', runtime_text)
     
@@ -27,46 +27,42 @@ def create_retry_session(
     status_forcelist=(500, 502, 504, 429, 403),
     session=None
 ):
-    """
-    Create a requests session with retry capabilities.
-    
-    :param retries: Number of times to retry the request
-    :param backoff_factor: Delay between retries increases exponentially
-    :param status_forcelist: HTTP status codes to retry on
-    :param session: Optional existing session to add retry capabilities
-    :return: A requests session with retry mechanism
-    """
-    # Use existing session or create a new one
+
+    # create a requests session with retry capabilities
     session = session or requests.Session()
     
     # Configure retry strategy
     retry = Retry(
-        total=retries,            # Total number of retries
-        read=retries,             # Retries for read errors
-        connect=retries,          # Retries for connection errors
-        backoff_factor=backoff_factor,  # Exponential backoff
-        status_forcelist=status_forcelist,  # HTTP status codes to retry
-        raise_on_status=False     # Don't raise an exception on status error
+
+        # create a requests session with retry capabilities
+        total=retries,
+        read=retries,
+
+        connect=retries,
+        backoff_factor=backoff_factor,
+
+        # status errors for which you can retry
+        status_forcelist=status_forcelist,
+        raise_on_status=False 
     )
     
-    # Create an adapter with the retry strategy
+    # adapter with retry specs
     adapter = HTTPAdapter(max_retries=retry)
     
-    # Mount the adapter to both HTTP and HTTPS
     session.mount('http://', adapter)
     session.mount('https://', adapter)
     
     return session
 
 def scrape_imdb_id(imdb_id):
-    # Create a session with retry capabilities
+    # allowing retries
     session = create_retry_session()
 
     header = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 6.3; Win 64 ; x64) Apple WeKit /537.36(KHTML , like Gecko) Chrome/80.0.3987.162 Safari/537.36'
     }
 
-    # Add random delay to prevent rate limiting
+    # add random timer so that imdb does not block ip from syrpassing rate limit
     time.sleep(random.uniform(1, 3))
 
     def safe_request(url, session=session, headers=header):
@@ -85,13 +81,13 @@ def scrape_imdb_id(imdb_id):
             print(f"Request error for {url}: {e}")
             return None
 
-    # Scraping URLs
+    # URLs to be scraped (keywords and main movie page)
     urls = {
         'main': f"https://www.imdb.com/title/{imdb_id}/",
         'keywords': f"https://www.imdb.com/title/{imdb_id}/keywords/"
     }
 
-    # Perform requests
+    # getting html of each web page
     responses = {}
     for key, url in urls.items():
         response = safe_request(url)
@@ -106,21 +102,21 @@ def scrape_imdb_id(imdb_id):
         soup = BeautifulSoup(responses['main'].text, 'html.parser')
         soup_keywords = BeautifulSoup(responses['keywords'].text, 'html.parser')
 
-        # Scraping genres
-        chip_list_scrollers = soup.find_all('div', class_='ipc-chip-list__scroller')
-        if chip_list_scrollers:
-            genres_scroller = chip_list_scrollers[0]
+        # scraping genres
+        genre_element = soup.find_all('div', class_='ipc-chip-list__scroller')
+        if genre_element:
+            genres_scroller = genre_element[0]
             genres = [
                 genre.find('span', class_='ipc-chip__text').get_text(strip=True) 
                 for genre in genres_scroller.find_all('a', class_='ipc-chip')
             ]
             if genres:
                 movie_data['genres'] = ', '.join(genres)
-                print(f"    New Genres: {', '.join(genres)}")
+                print(f"New Genres: {', '.join(genres)}")
             else:
-                print("    Genres not found")
+                print("Genres not found")
 
-        # Scraping for movie runtime
+        # scraping for movie runtime
         runtime_element = soup.find('li', attrs={'data-testid': 'title-techspec_runtime'})
         if runtime_element:
             runtime_text = runtime_element.find('div', class_='ipc-metadata-list-item__content-container').get_text(strip=True)
@@ -128,11 +124,11 @@ def scrape_imdb_id(imdb_id):
                 runtime_minutes = parse_runtime_to_minutes(runtime_text)
                 if runtime_minutes:
                     movie_data['runtime'] = runtime_minutes
-                    print(f"    New Runtime: {runtime_minutes}")
+                    print(f"New Runtime: {runtime_minutes}")
         else:
-            print("    Runtime: Not found")
+            print("Runtime: Not found")
 
-        # Scraping languages
+        # scraping languages
         languages_element = soup.find('li', {'data-testid': 'title-details-languages'})
         languages_list = []
         
@@ -146,13 +142,13 @@ def scrape_imdb_id(imdb_id):
                 
                 languages_str = ', '.join(languages_list)
                 movie_data['spoken_languages'] = languages_str
-                print(f"    New Languages: {languages_str}")
+                print(f"New Languages: {languages_str}")
             else:
-                print("    Languages not found")
+                print("Languages not found")
         else:
-            print("    Languages element not found")
+            print("Languages element not found")
 
-        # Scraping production companies
+        # scraping production companies
         companies_element = soup.find('li', {'data-testid': 'title-details-companies'})
         companies_list = []
         
@@ -166,13 +162,13 @@ def scrape_imdb_id(imdb_id):
                 
                 companies_str = ', '.join(companies_list)
                 movie_data['production_companies'] = companies_str
-                print(f"    New Production Companies: {companies_str}")
+                print(f"New Production Companies: {companies_str}")
             else:
-                print("    Production companies links not found")
+                print("Production companies links not found")
         else:
-            print("    Production companies element not found")
+            print("Production companies element not found")
 
-        # Scraping production countries
+        # scraping production countries
         countries_element = soup.find('li', {'data-testid': 'title-details-origin'})
         countries_list = []
         
@@ -186,11 +182,11 @@ def scrape_imdb_id(imdb_id):
                 
                 countries_str = ', '.join(countries_list)
                 movie_data['production_countries'] = countries_str
-                print(f"    New Production Countries: {countries_str}")
+                print(f"New Production Countries: {countries_str}")
             else:
-                print("    Production countries links not found")
+                print("Production countries links not found")
         else:
-            print("    Production countries element not found")
+            print("Production countries element not found")
 
 
 
@@ -210,11 +206,11 @@ def scrape_imdb_id(imdb_id):
             if keywords:
                 keywords_str = ', '.join(keywords)
                 movie_data['keywords'] = keywords_str
-                print(f"    New Plot Keywords: {keywords_str}")
+                print(f"New Plot Keywords: {keywords_str}")
             else:
-                print("    Plot keywords not found")
+                print("Plot keywords not found")
         else:
-            print("    Plot keyword element not found")
+            print("Plot keyword element not found")
 
         return movie_data
         
@@ -224,11 +220,8 @@ def scrape_imdb_id(imdb_id):
 
 def update_movie_dataset(input_file, saveInterval, start_line=None, end_line=None):
 
-    # Read the entire CSV file
     df = pd.read_csv(input_file)
     
-    # Adjust start and end lines to account for header row
-    # Subtract 1 from start and end to align with zero-indexed rows after header
     if start_line is None:
         start_line = 0
     else:
@@ -250,7 +243,6 @@ def update_movie_dataset(input_file, saveInterval, start_line=None, end_line=Non
         for index, row in df_subset.iterrows():
             imdb_id = row['imdb_id']
             
-            # Print the movie number as per user's requirement (adding 2 to account for header)
             print(f"\nMovie {index + 1}:")
             print(f"Title: {row['title']}")
             print(f"IMDb ID: {imdb_id}")
@@ -264,10 +256,13 @@ def update_movie_dataset(input_file, saveInterval, start_line=None, end_line=Non
             if (pd.isnull(row['genres']) or pd.isnull(row['runtime']) or 
                 pd.isnull(row['spoken_languages']) or pd.isnull(row['production_companies']) or
                 pd.isnull(row['production_countries']) or pd.isnull(row['keywords'])):
+
+                print()
+                print(f"WEB SCRAPED DATA FOR {imdb_id} ({row['title'].upper()}):")
                 
                 movie_data = scrape_imdb_id(imdb_id)
 
-                # Add this check to skip movies with invalid URLs or scraping failures
+                # Skip invalid URLs or IMDb ID's
                 if movie_data is None:
                     print(f"Skipping movie {imdb_id} due to scraping failure")
                     counter += 1
@@ -276,7 +271,6 @@ def update_movie_dataset(input_file, saveInterval, start_line=None, end_line=Non
                     continue
                 
                 try: 
-                    # Only update columns that are currently None/NaN
                     if pd.isnull(row['genres']) and 'genres' in movie_data:
                         df.at[index, 'genres'] = movie_data['genres']
                     
@@ -312,12 +306,10 @@ def update_movie_dataset(input_file, saveInterval, start_line=None, end_line=Non
         print("Scraping save")
     print("Scraping finished")
 
-# Example usage:
+
 if __name__ == "__main__":
     input_file = 'modern_feature_films.csv'
     
-    # Now you can specify the movie numbers as they appear in the terminal
-    # e.g., to scrape the 11743rd movie, you'd use:
     start = 15000
     end = 15100
     saveInterval = 1000
